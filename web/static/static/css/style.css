@@ -1,0 +1,44 @@
+.camera {
+	display: inline-block;
+	padding:10px;
+	
+}
+
+.heading{
+	background:red;
+	
+}
+
+.addbox{
+    width:100%;
+    height:100%;
+}
+
+
+.top{
+	background:red;
+	padding:20px;
+	
+}
+
+.menu{
+	background:yellow;
+}
+.settings{
+	background:green;
+}
+
+#triangle-bottomleft {
+	width: 100%;
+	height: 100%;
+	border-bottom: 10px solid red; 
+	border-right: 10px solid transparent;	
+}
+
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active до версии 2.1.8 */ {
+  opacity: 0;
+}

@@ -1,0 +1,35 @@
+<div class="container">
+    <div class="row">
+        <div class="two-third column">
+            <div class="row">
+                <div class="one column"><span>Choose your width:</span></div>
+                <div class="eleven columns">
+                    <select v-model="width">
+                        <option>240</option>
+                        <option>320</option>
+                        <option>500</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="one column">
+                    <span>Choose your height:</span>
+                </div>
+                <div class="eleven columns">
+                    <select v-model="height">
+                        <option>240</option>
+                        <option>320</option>
+                        <option>500</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <button v-on:click="updateConfig()">Update</button>
+            </div>
+        </div>
+        <div class="one-third column">
+            <canvas v-bind:width="width" v-bind:height="height"></canvas>
+        </div>
+    </div>
+</div>

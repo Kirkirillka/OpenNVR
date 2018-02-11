@@ -1,0 +1,16 @@
+[Unit]
+Description=OpenNVR ffmpeg stream flow {i} service
+StopWhenUnneeded=true
+
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/env bash -c "ffmpeg -f v4l2 -i {source} -f alsa -ar 44100 -i hw:0 -f mpegts -codec:v mpeg1video -s 320x240 -b:v 1000k -bf 0 -codec:a mp2 -b:a 128k -muxdelay 0.001  http://0.0.0.0:{stream_port}/flow"
+Restart=always
+RestartSec=5
+StartLimitInterval=10
+StartLimitBurst=3
+
+
+[Install]
+WantedBy=multi-user.target

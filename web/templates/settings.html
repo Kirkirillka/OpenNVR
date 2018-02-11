@@ -1,0 +1,142 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<div class="row">
+    <div class="three column ">
+        <ul class="">
+            <li>
+                <a v-on:click="show.main = !show.main" href="#main">Общие настроки</a>
+                <transition name="fade">
+                    <ul v-if="show.main">
+                        <li><a href="#videosize" v-on:click="seen='videosize'">Размер видео</a></li>
+                        <li><a href="#reinitilize" v-on:click="reinitialize()">Реинициализация</a></li>
+                    </ul>
+                </transition>
+            </li>
+            <li>
+                <a v-on:click="show.services= !show.services" href="#news">Сервисы</a>
+                <transition name="fade">
+                    <ul v-if="show.services">
+                        <li><a href="#ssh" v-on:click="seen='ssh'">SSH</a></li>
+                        <li><a href="#backup" v-on:click="seen='backup'">Резервное копирование</a></li>
+                    </ul>
+                </transition>
+            </li>
+            <li>
+                <a href="#users" v-on:click="show.users= !show.users">Пользователи</a>
+                <transition name="fade">
+                    <ul v-if="show.users">
+                        <li><a href="#me" v-on:click="seen='my'">My profile</a></li>
+                        <li><a href="#users" v-on:click="seen='all_users'">All users</a></li>
+                    </ul>
+                </transition>
+            </li>
+            <li>
+                <a href="#reboot">Перезагрузка</a>
+            </li>
+        </ul>
+    </div>
+    <div class="nine columns settings">
+        <template v-if="seen=='videosize'">
+            {% include "video_size.html" %}
+        </template>
+        <template v-if="seen=='reinitialize'">
+            Reinitilize
+        </template>
+        <template v-if="seen=='ssh'">
+            <div class="container">
+                <div class="row">
+                    <h3>SSH</h3>
+                </div>
+                <div class="row">
+                    <div class="five columns">Текущее состояние</div>
+                    <div class=" one column">
+                        <button v-on:click="changeCondService('ssh',services.ssh )">
+                            [[ services.ssh ]]
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template v-if="seen=='backup'">
+            Backup
+        </template>
+
+
+        <template v-if="seen=='my'">
+            <div class="container">
+                <div class="row">
+                    <h4> You are logged as: </h4>
+                    <h2>[[user.email]]</h2>
+                    <div class="columns">
+                        <span>Roles: </span>
+                        <div class="role" v-for="role in user.roles">[[ role ]]</div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template v-if="seen=='all_users'">
+            <div class="container">
+                <div class="row">
+                    <table class="u-full-width">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Enabled</th>
+                            <th>Roles</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <transition name="fade">
+                            <tr v-for="user in users">
+                                <td>[[user.id]]</td>
+                                <td>[[user.email]]</td>
+                                <td>[[user.is_enabled]]</td>
+                                <td><span v-for="role in user.roles">
+                                        <label>
+                                            [[ role ]]
+                                        </label>
+                                    </span></td>
+                                <td>
+                                    <button v-on:click="delUser(user.id)">Delete</button>
+                                    <button v-on:click="disableUser(user.id)">
+                                        <span v-if="user.is_enabled">Disable</span>
+                                        <span v-if="!user.is_enabled">Enable</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        </transition>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="row">
+                    <div class="one-third column">
+                        <span>Имя нового пользователя</span>
+                    </div>
+                    <div class="one-third column">
+                        <span>Имя нового пользователя</span>
+                    </div>
+                </div>
+                <div class="row">
+                    <form>
+                        <div class="one-third column">
+                                <input type="text" id="username">
+                        </div>
+                        <div class="one-third column">
+                                <input type="password" id="password">
+                        </div>
+                        <div class="one-third column">
+                            <button>Добавить пользователя</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+
+
+{% endblock %}

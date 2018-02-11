@@ -1,0 +1,18 @@
+[Unit]
+Description=OpenNVR cam {i} service
+StopWhenUnneeded=true
+
+
+[Service]
+Type=simple
+WorkingDirectory={directory}
+ExecStart=/bin/bash -c "python3.6 streamer.py {source} --port {stream_port} --ws_port {ws_port}"
+Restart=always
+RestartSec=5
+StartLimitInterval=10
+StartLimitBurst=3
+
+
+
+[Install]
+WantedBy=multi-user.target

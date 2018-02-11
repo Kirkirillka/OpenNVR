@@ -1,0 +1,65 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>JSMpeg Stream Client</title>
+	<style type="text/css">
+		html, body {
+			background-color: #111;
+			text-align: center;
+		}
+	</style>
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+</head>
+<body>
+	<script type="text/javascript" src="static/jsmpeg.min.js"></script>
+	<script src="js/bootstrap.min.js" ></script>
+	<script src="js/vue.min.js"></script>
+	<script type="text/javascript" src="static/start.js"></script>
+
+<nav class="navbar navbar-default">
+	<div class="container">
+		<div class="navbar-header">
+			OpenDVR
+		</div>
+
+		<ul class="nav navbar-nav navbar-right">
+			<li>
+				<a href="#">Hello,kirill</a>
+				</li>
+			<li>
+				<a href="#">Login</a>
+			</li>
+		</ul>
+</div>
+</nav>
+
+<div class="container-fluid">
+	<div class="row">
+		{% for camera in sources %}
+<div class="col-sm-6">
+			<canvas id="video-canvas{{ loop.index0 }}"></canvas>
+		<p>
+	    <button id="pause{{ loop.index0 }}">Pause</button>
+	    <button id="start{{ loop.index0 }}">Start</button>
+		</p>
+			<script type="text/javascript">
+				var canvas = document.getElementById('video-canvas{{ loop.index0 }}');
+				var url = 'ws://'+document.location.hostname+":{{ sources[camera]['ws_port'] }}";
+				var player{{ loop.index0 }} = new JSMpeg.Player(url, {canvas: canvas});
+
+				pause{{ loop.index0 }}.onclick=function(){player{{ loop.index0 }}.pause()};
+				start{{ loop.index0 }}.onclick=function(){player{{ loop.index0 }}.play()};
+
+			</script>
+			</div>
+		{% endfor %}
+
+
+	</div>
+</div>
+
+</body>
+</html>
