@@ -31,7 +31,7 @@
     <!--<link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css"> -->
 </head>
 <body>
-<div class="container-fluid">
+<div class="container">
 
     <div id="app">
         <!-- Top -->
@@ -42,12 +42,7 @@
 
         {% block body %}
         <!-- Body-->
-        <div class="row" v-if="current_page='/'">
-            <div class="columns ">
                 {% include "cameras_init.html" %}
-            </div>
-
-        </div>
         {% endblock %}
 
         {% block sidebar %}
