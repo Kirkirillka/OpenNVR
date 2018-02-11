@@ -1,61 +1,59 @@
 <div class="camera" v-for="cam in sources.enabled">
-    <div class="container">
+    <div class="container-fluid">
         <div class="row">
+            <div class="columns">
                 <img v-bind:id="'pause'+cam.name" src="static/png/play.png">
                 <img v-bind:id="'start'+cam.name" src="static/png/pause.png">
                 <span> Camera #[[ cam.name ]]</span>
-                <img v-bind:id="'delete'+cam.name" src="static/png/del.png" v-on:click="delCam(cam.name)"
+                <img v-bind:id="'delete'+cam.name" src="static/png/play.png" v-on:click="delCam(cam.name)"
                      v-on:load="init_cam(cam)">
             </div>
         </div>
-        <div class="row   ">
+        <div class="row">
             <div class="columns">
-                <canvas v-bind:id="'video-canvas'+cam.name" v-bind:width="width" v-bind:height="height" class="canvas"></canvas>
+                <canvas v-bind:id="'video-canvas'+cam.name" v-bind:width="width" v-bind:height="height"
+                        class="canvas">
+                </canvas>
             </div>
         </div>
     </div>
 </div>
 
 {% if current_user.has_role('admin') %}
-<div class="camera" >
-    <div class="container u-text-center">
 
-        <div class="row" style="position: relative">
-            <img v-if="!is_send" v-on:click="is_send=!is_send" src="static/png/plus.png" class="u-center-abs"></img>
-
-
-            <template v-if="is_send">
-                <div class="container  u-center-abs">
-                    <div class="row">
-                        <div class="one column offset-by-eleven">
-                            <img src="/static/png/close.png" v-on:click="is_send=!is_send">
-                        </div>
-                    </div>
-                    <div class="row ">
-                        <ul class="">
-                            <li>Name: <span>[[sources.picked.name ]]</span></li>
-                            <li>Source: <span>[[sources.picked.source ]]</span></li>
-                            <li>Websocket port: <span>[[sources.picked.ws_port ]]</span></li>
-                            <li>Streaming port: <span>[[sources.picked.http_port ]]</span></li>
-                        </ul>
-                    </div>
-                    <div class="row">
-                        <div class="columns">
-                                <select v-model="sources.picked">
-                                    <option v-for="src in sources.free" v-bind:value="src">
-                                        [[ src.name ]]
-                                    </option>
-                                </select>
-                            <button v-on:click="addCam(sources.free[0])">Create</button>
-                        </div>
-                    </div>
+<template v-if="sources.free.length!=0">
+    <div class="helper">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="seven columns">
+                    <select v-model="sources.picked">
+                        <option v-for="src in sources.free" v-bind:value="src">
+                            [[ src.source ]]
+                        </option>
+                    </select>
                 </div>
-
-            </template>
-            <div>
-                <canvas class="canvas"></canvas>
+                <div class="five column">
+                    <button v-on:click="addCam(sources.free[0])">Create</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="seven columns">Name:</div>
+                <div class="five columns"><span>[[sources.picked.name ]]</span></div>
+            </div>
+            <div class="row">
+                <div class="seven columns">Source:</div>
+                <div class="five columns"><span>[[sources.picked.source ]]</span></div>
+            </div>
+            <div class="row">
+                <div class="seven columns"> Websocket port:</div>
+                <div class="five columns"><span>[[sources.picked.ws_port ]]</span></div>
+            </div>
+            <div class="row">
+                <div class="seven columns">Streaming port:</div>
+                <div class="five columns"><span>[[sources.picked.http_port ]]</span></div>
             </div>
         </div>
+
     </div>
-</div>
+</template>
 {% endif %}
