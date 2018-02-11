@@ -34,7 +34,6 @@ celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
 led = Broker()
-services=ServiceBroker()
 
 # Setup Flask-Security
 user_datastore = SQLAlchemySessionUserDatastore(db_session,
@@ -46,6 +45,10 @@ security = Security(app, user_datastore)
 #Setup Flask-Redis for flashing messages :)
 app.config['REDIS_URL']='redis://localhost:6379'
 queue=MessageQueue(app)
+
+services=ServiceManager()
+cam_server=SourceManager()
+configurator=ConfigManager()
 
 
 @app.before_first_request
@@ -66,21 +69,21 @@ def init_basic_users():
 
 @celery.task()
 def addCam(source):
-    if create_cam_service(source):
+    if cam_server.add_cam(source):
         return True
     return False
 
 
 @celery.task()
 def delCam(source):
-    if delete_cam_service(source):
+    if cam_server.del_cam(source):
         return True
     return False
 
 
 @celery.task()
 def updateConf(data):
-    update_conf(data)
+    configurator.update(data)
     return True
 
 
@@ -104,11 +107,11 @@ def config(action):
 
         if current_user.has_role('user'):
             if action == 'get':
-                return jsonify(get_config())
+                return jsonify(configurator.hive)
 
         if True or current_user.has_role('admin'):
             if action == 'reinitialize':
-                result = update_available_sources()
+                result = cam_server.update_db()
                 if result:
                     return jsonify(REINITILAZE)
                 else:
@@ -121,7 +124,7 @@ def config(action):
             if action == 'update':
                 data = request.json
                 # updateConf.apply_async([data, ])
-                result = update_conf(data)
+                result = configurator.update(data)
                 if result:
                     return jsonify(UPDATE_CONFIG)
                 return jsonify(ERROR)
@@ -169,24 +172,24 @@ def sources(action):
         if True or current_user.has_role('user'):
             flash('user')
             if action == 'all':
-                return jsonify(get_available_sources())
+                return jsonify(cam_server.availiable)
             if action == 'free':
-                return jsonify(get_free_sources())
+                return jsonify(cam_server.free)
             if action == 'enabled':
-                return jsonify(get_enabled_sources())
+                return jsonify(cam_server.enabled)
 
     if request.method == 'POST':
         if current_user.has_role('admin'):
             if action == 'add':
                 src = request.json
                 # result = addCam.delay(src)
-                result = create_cam_service(src)
+                result = cam_server.add_cam(src)
                 return jsonify(CAM_ADDED)
                 # if result.wait():
                 #    return jsonify(dict(success='True'))
             if action == 'del':
                 src = request.json
-                result = delete_cam_service(src['name'])
+                result = cam_server.del_cam(src['name'])
                 return jsonify(CAM_DELETED)
                 # result=delCam.delay(src['name'])
                 # if result.wait():
@@ -198,7 +201,7 @@ def sources(action):
 
 @app.route("/services/",methods=['GET',])
 def service_list():
-    return jsonify(get_config()['services'])
+    return jsonify(configurator.hive['services'])
 
 @app.route("/service/<action>",methods=['POST',])
 def service_do(action):
