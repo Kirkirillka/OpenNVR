@@ -4,9 +4,10 @@
 ACTION=$1
 NAME=$2
 SOURCE=$3
-DIRECTORY=$4
-WS=$5
-HTTP=$6
+DIRECTORY="/opt/py_cam/cam"
+WS=$4
+HTTP=$5
+MODE=$6
 
 echo $DIRECTORY >/tmp/echo
 
@@ -15,6 +16,7 @@ TMP_CAM=/tmp/cam
 TMP_FFMPEG=/tmp/ffmpeg
 
 SERVICE_DIR=/etc/systemd/system/
+TEMPLATES_DIR=/var/opt/py_cam/service_templates
 
 #Constants
 CAM_PREFIX_NAME='py_'
@@ -55,19 +57,19 @@ if [[ $ACTION == 'delete' ]];then
 
 if [  $# != 6 ]
     then
-        echo "Need exacly five extra  args to create:  NAME, SOURCE, DIRECTORY, WEBSOCKET_PORT, HTTP_PORT"
+        echo "Need exacly six extra  args to create:  NAME, SOURCE, WEBSOCKET_PORT, HTTP_PORT,MODE"
         exit 1
-    fi
+fi
 
 
 
 if [[ $ACTION == 'create' ]];then
 
         #Creating pycam service in TMP
-        cat pycam.template | sed -e "s|{i}|$SOURCE|g" | sed -e "s|{directory}|$DIRECTORY|g" | sed -e "s|{source}|$SOURCE|g"| sed -e "s|{stream_port}|$HTTP|g" | sed -e "s|{ws_port}|$WS|g" > $TMP_CAM
+        cat $TEMPLATES_DIR/pycam.template | sed -e "s|{i}|$SOURCE|g" | sed -e "s|{directory}|$DIRECTORY|g" | sed -e "s|{source}|$SOURCE|g"| sed -e "s|{stream_port}|$HTTP|g" | sed -e "s|{ws_port}|$WS|g" > $TMP_CAM
 
         #Creating pyffmpeg service in TMP
-        cat pyffmpeg.template | sed -e "s|{i}|$SOURCE|g" | sed -e "s|{directory}|$DIRECTORY|g" | sed -e "s|{source}|$SOURCE|g"| sed -e "s|{stream_port}|$HTTP|g" | sed -e "s|{ws_port}|$WS|g" > $TMP_FFMPEG
+        cat $TEMPLATES_DIR/pyffmpeg.template | sed -e "s|{i}|$SOURCE|g" | sed -e "s|{directory}|$DIRECTORY|g" | sed -e "s|{source}|$SOURCE|g"| sed -e "s|{stream_port}|$HTTP|g" | sed -e "s|{ws_port}|$WS|g" | sed -e "s|{mode}|$MODE|g" > $TMP_FFMPEG
 
         #Creating path to services
         CAM_PATH=$SERVICE_DIR$CAM_PREFIX_NAME$NAME.service
@@ -103,4 +105,4 @@ if [[ $ACTION == 'create' ]];then
         #It's successfully done
         echo "It' s successfully done!"
         exit 0
-    fi
+fi
