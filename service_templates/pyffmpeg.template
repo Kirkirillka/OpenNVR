@@ -1,0 +1,16 @@
+[Unit]
+Description=OpenNVR ffmpeg stream flow {i} service
+StopWhenUnneeded=true
+
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/env bash -c "/var/opt/py_cam/scripts/run.sh {source} {stream_port} {mode}"
+Restart=always
+RestartSec=5
+StartLimitInterval=10
+StartLimitBurst=3
+
+
+[Install]
+WantedBy=multi-user.target
