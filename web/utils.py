@@ -7,8 +7,10 @@ from flask_redis import FlaskRedis
 
 from itertools import count
 
-CAM_DIR = '/home/bachelor/Desktop/py_cam/cam/'
+CAM_DIR = '/opt/py_cam/cam'
 FFMPEG_DIR = ''
+
+SCRIPT_PATH="/var/opt/py_cam/scripts"
 
 enabled_sources = []
 available_sources = []
@@ -105,7 +107,7 @@ class SourceManager():
         except:
             current_en_sources = []
 
-        free_sources = self.free()
+        free_sources = self.free
 
         if dict_in(source, free_sources):
             current_en_sources.append(source)
@@ -138,12 +140,14 @@ class SourceManager():
         source = str(src['source'])
         ws_port = str(src['ws_port'])
         http_port = str(src['http_port'])
+
         result = self.__connect(src)
+
+        mode="BACKUP"
 
         if result:
             p = subprocess.check_call(
-                ['/home/bachelor/Desktop/py_cam/web/cam_builder.sh', 'create', name, source, CAM_DIR, ws_port,
-                 http_port],
+                [os.path.join(SCRIPT_PATH,'cam_builder.sh'), 'create', name, source, ws_port, http_port,mode],
             )
             # print(p.communicate())
             return True
@@ -159,7 +163,7 @@ class SourceManager():
                 dump(enabled_sources, open(self.ENABLED_SOURCES_PATH, 'w'))
 
                 p = subprocess.check_call(
-                    ['/home/bachelor/Desktop/py_cam/web/cam_builder.sh', 'delete', str(source)],
+                    [os.path.join(SCRIPT_PATH,'cam_builder.sh'), 'delete', str(source)],
                 )
                 # print(p.communicate())
 
@@ -167,8 +171,6 @@ class SourceManager():
 
                 return True
         return False
-
-
 
 class MessageQueue():
 
@@ -187,7 +189,7 @@ class MessageQueue():
             else:
                 return
 
-class ServiceBroker():
+class ServiceManager():
     def __init__(self):
         self.allowed_services = ['ssh', 'ftp']
         pass
