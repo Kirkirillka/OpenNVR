@@ -169,17 +169,17 @@ var app=new Vue({
 		changeCondService(service,cond){
 		    console.log(service,cond);
 		    if (cond=='on'){cond='off'}else{cond='on'};
-		    fetch('/service/'+cond,{
+		    fetch('/service',{
                 method:'post',
                 credentials: 'include',
                 headers:{"Content-Type":"application/json",
                            "Accept":'application/json, text/plain, */*'
                 },
-		        body:JSON.stringify({'name':service})
-		    }).then(response=>response.json()).then(response=>this.services[service]=cond);
+		        body:JSON.stringify({'name':service,'action':cond})
+		    }).then(response=>response.json()).then(response=>this.services[service].status=cond);
 		},
 		init_cam:function(cam){
-
+            console.log(cam);
 		    if(this.sources.enabled.length==0){return false};
 
 		    var canvas = document.getElementById('video-canvas'+cam.name);

@@ -203,8 +203,9 @@ def sources(action):
 def service_list():
     return jsonify(configurator.hive['services'])
 
-@app.route("/service/<action>",methods=['POST',])
-def service_do(action):
+@app.route("/service",methods=['POST',])
+def service_do():
+    action=request.json['action']
     service_name = request.json['name']
     result='False'
     if action=='on':
