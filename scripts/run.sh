@@ -31,7 +31,7 @@ fi
 #https://www.ffmpeg.org/ffmpeg-formats.html#segment_002c-stream_005fsegment_002c-ssegment
 
 #How many times between two segments
-SEGMENT_TIME=2
+SEGMENT_TIME=120
 #How to store fragments
 SEGMENT_FORMAT="mp4"
 #There is a list to restore original videoline
