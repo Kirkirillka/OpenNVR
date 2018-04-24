@@ -13,4 +13,4 @@ StartLimitBurst=3
 
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=opennvr.target
