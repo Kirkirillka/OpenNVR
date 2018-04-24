@@ -108,8 +108,10 @@ var app=new Vue({
 		      .then(response=>this.setSources());
 		},
 		delCam:function(name){
-		    var deleted=this.sources.enabled.findIndex(a=>a.name=name)
-		    this.sources.enabled.splice(deleted,1)
+		    var afterDelete=function(){
+		        var deleted=this.sources.enabled.findIndex(a=>a.name=name);
+		        this.sources.enabled.splice(deleted,1);
+		    };
 		    fetch('/cam/del',{
 		        method:'post',
 		        credentials: 'include',
@@ -119,33 +121,63 @@ var app=new Vue({
 		        body:JSON.stringify({'name':name})
 		    }).then(response=>response.json())
 		       .then(response=>this.process_message(response))
-		       .then(response=>this.setSources());
+		       .then(response=>this.setSources())
+		       .then(response=>afterDelete());
 		},
-		delUser(id){
-		    if (id ==undefined){
+		addUser(){
+            var email=document.getElementById('email').value
+            var password=document.getElementById('password').value
+
+            fetch('/users/add',{
+		        method:"POST",
+		        credentials: 'include',
+		        headers:{"Content-Type":"application/json",
+		                   "Accept":'application/json, text/plain, */*'
+		        },
+		        body:JSON.stringify({'email':email,'password':password})
+		    }).then(response=>response.json())
+		      .then(response=>this.process_message(response))
+		      .then(response=>this.setUsers());
+		},
+		delUser(user){
+		    if (user.id ==undefined){
 		        console.log('ID is not set');
 		        return
 		    };
-		    var user_founded=this.users.findIndex(a=>a.id==id)
-		    if(user_founded != undefined){
-		        console.log('User deleted ' +id);
-		        this.users.splice(user_founded,1)
-		    }else{
-		        console.log('Not found');
-		    }
+		    fetch('/users/del',{
+		        method:"POST",
+		        credentials: 'include',
+		        headers:{"Content-Type":"application/json",
+		                   "Accept":'application/json, text/plain, */*'
+		        },
+		        body:JSON.stringify({'id':user.id})
+		    }).then(response=>response.json())
+		      .then(response=>this.process_message(response))
+		      .then(response=>this.setUsers());
 		},
-		disableUser(id){
-		    if (id ==undefined){
+		changeState(user){
+		    if (user.id ==undefined){
 		        console.log('ID is not set');
 		        return
 		    };
-		    var user_founded=this.users.find(a=>a.id==id)
-		    if(user_founded != undefined){
-		        console.log('User status changed ' +id);
-		        user_founded.is_enabled=! user_founded.is_enabled;
+		    action='';
+		    if (user.is_enabled == true)
+		    {
+		            action='disable';
 		    }else{
-		        console.log('Not found');
-		    }
+		            action='enable';
+		    };
+
+		    fetch('/users/'+action,{
+		        method:"POST",
+		        credentials: 'include',
+		        headers:{"Content-Type":"application/json",
+		                   "Accept":'application/json, text/plain, */*'
+		        },
+		        body:JSON.stringify({'id':user.id})
+		    }).then(response=>response.json())
+		      .then(response=>this.process_message(response))
+		      .then(response=>this.setUsers());
 		},
 		reinitialize:function(){
 		    this.seen='reinitialize';
