@@ -3,20 +3,23 @@ import subprocess
 import os
 from json import dumps, loads, dump, load
 
+from web.decorators import init,commit
+
 from flask_redis import FlaskRedis
 
 from itertools import count
 
+
+from flask_security import login_required, current_user, roles_required, Security, SQLAlchemySessionUserDatastore
+from flask_security.utils import hash_password,verify_and_update_password
+
+
+from web.auth.database import db_session, init_db
+from web.auth.models import User, Role
+
+
+
 CAM_DIR = '/opt/py_cam/cam'
-FFMPEG_DIR = ''
-
-SCRIPT_PATH="/var/opt/py_cam/scripts"
-
-enabled_sources = []
-available_sources = []
-
-
-WEB_CONF_PATH = 'web_config/web.conf'
 
 
 
@@ -26,25 +29,36 @@ def dict_equal(dict_a, dict_b):
             return True
     return False
 
-
 def dict_in(foo, sequence):
     return any([dict_equal(foo, a) for a in sequence])
 
 
 class ConfigManager():
+    WEB_CONF_PATH = 'web_config/web.conf'
+    FIELDS = ['width', 'height', 'message']
+
+    def __init__(self):
+        self._width=320
+        self._height=240
+        self._message="Hello world"
+
 
     def update(self,data):
-        fields = ['width', 'height', 'message']
-        config = load(open(WEB_CONF_PATH))
+        config = load(open(self.WEB_CONF_PATH))
         for r in data:
-            if r in fields:
+            if r in self.FIELDS:
                 config[r] = data[r]
-        dump(config, open(WEB_CONF_PATH, 'w'))
+        dump(config, open(self.WEB_CONF_PATH, 'w'))
         return True
+
+    def _commit(self,func,*args,**kwargs):
+        func(args,kwargs)
+
+
 
     @property
     def hive(self):
-        return load(open(WEB_CONF_PATH))
+        return load(open(ConfigManager.WEB_CONF_PATH))
 
 
 
@@ -52,6 +66,8 @@ class SourceManager():
 
     ENABLED_SOURCES_PATH = 'web_config/en_sources.json'
     ALL_SOURCES_PATH = 'web_config/all_sources.json'
+
+    SCRIPT_PATH = "/var/opt/py_cam/scripts"
 
     def __init__(self):
         pass
@@ -143,11 +159,11 @@ class SourceManager():
 
         result = self.__connect(src)
 
-        mode="BACKUP"
+        mode="BASIC"
 
         if result:
             p = subprocess.check_call(
-                [os.path.join(SCRIPT_PATH,'cam_builder.sh'), 'create', name, source, ws_port, http_port,mode],
+                [os.path.join(self.SCRIPT_PATH,'cam_builder.sh'), 'create', name, source, ws_port, http_port,mode],
             )
             # print(p.communicate())
             return True
@@ -163,7 +179,7 @@ class SourceManager():
                 dump(enabled_sources, open(self.ENABLED_SOURCES_PATH, 'w'))
 
                 p = subprocess.check_call(
-                    [os.path.join(SCRIPT_PATH,'cam_builder.sh'), 'delete', str(source)],
+                    [os.path.join(self.SCRIPT_PATH,'cam_builder.sh'), 'delete', str(source)],
                 )
                 # print(p.communicate())
 
@@ -189,48 +205,69 @@ class MessageQueue():
             else:
                 return
 
-class ServiceManager():
+class ServiceManager(ConfigManager):
     def __init__(self):
-        self.allowed_services = ['ssh', 'ftp']
+        self.allowed_services = ['ssh', 'vsftpd','ntp']
         pass
 
     def start(self, service):
         if not service in self.allowed_services:
             return False
-        config = load(open(WEB_CONF_PATH))
+        config = load(open(ServiceManager.WEB_CONF_PATH))
         subprocess.check_call(['systemctl enable ' + service, ], shell=True)
         subprocess.check_call(['systemctl start ' + service, ], shell=True)
-        config['services'][service] = 'on'
-        dump(config, open(WEB_CONF_PATH, 'w'))
+        config['services'][service]['status']='on'
+        dump(config, open(ServiceManager.WEB_CONF_PATH, 'w'))
         return True
 
     def stop(self, service):
         if not service in self.allowed_services:
             return False
-        config = load(open(WEB_CONF_PATH))
+        config = load(open(ServiceManager.WEB_CONF_PATH))
         subprocess.check_call(['systemctl disable ' + service, ], shell=True)
         subprocess.check_call(['systemctl stop ' + service, ], shell=True)
-        config['services'][service] = 'off'
-        dump(config, open(WEB_CONF_PATH, 'w'))
+        config['services'][service]['status'] = 'off'
+        dump(config, open(ServiceManager.WEB_CONF_PATH, 'w'))
         return True
+
+class BackupManager(ConfigManager):
+
+    @init
+    def __init__(self):
+
+        self._count=10
+        self._duration=10
+        self._enabled=False
+
+
+    @property
+    def count(self):
+        return self._count
+
+    @count.setter
+    @commit
+    def count(self,value):
+        self._count=value
+
+
+
 
 if __name__ == '__main__':
     src = '{"name":"test","source": "/dev/sda13", "ws_port": 8060, "http_port": 8061}'
 
-    cam=SourceManager()
-    cam.update_db()
-    print(cam.free)
-    print(cam.enabled)
-    print(cam.availiable)
-    cam.del_cam(cam.availiable[0]['name'])
+    from web.web_broker import userManager
 
+    users=userManager.users
 
-    serv = ServiceBroker()
-    serv.start('ssh')
-    serv.stop('ssh')
+    data={"email":"User","password":"123456"}
 
-    serv.start('ftp')
-    serv.stop('ftp')
+    userManager.update(2,data)
 
-    serv.start('www')
-    serv.stop('www')
+    new_user={"email":"NewUser",'password':"211152"}
+
+    userManager.add_user(new_user)
+    print(userManager.users)
+    userManager.del_user(3)
+
+    print(userManager.users)
+
