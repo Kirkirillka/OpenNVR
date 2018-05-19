@@ -1,20 +1,24 @@
 <div class="camera" v-for="cam in sources.enabled">
     <div class="container-fluid">
         <div class="row">
-            <div class="columns">
+            <div class="one column">
                 <img v-bind:id="'pause'+cam.name" src="static/png/play.png">
+            </div>
+            <div class="one column">
                 <img v-bind:id="'start'+cam.name" src="static/png/pause.png">
+            </div>
+            <div class="six columns offset-by-three">
                 <span> Camera #[[ cam.name ]]</span>
-                <img v-bind:id="'delete'+cam.name" src="static/png/play.png" v-on:click="delCam(cam.name)"
+            </div>
+            <div class="one column">
+                <img v-bind:id="'delete'+cam.name" src="static/png/close.png" v-on:click="delCam(cam.name)"
                      v-on:load="init_cam(cam)">
             </div>
         </div>
         <div class="row">
-            <div class="columns">
                 <canvas v-bind:id="'video-canvas'+cam.name" v-bind:width="width" v-bind:height="height"
                         class="canvas">
                 </canvas>
-            </div>
         </div>
     </div>
 </div>
