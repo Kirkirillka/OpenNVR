@@ -4,14 +4,6 @@ Vue.component('camera',{
     template:"<script>[[ source ]]</script>"
 });
 
-Vue.component('child', {
-  // определяем входной параметр
-  props: ['message'],
-  // как и другие данные, входной параметр можно использовать
-  // внутри шаблонов (а также и в методах, обращаясь через this.message)
-  template: '<span>{{ message }}</span>'
-})
-
 const store = new Vuex.Store({
     state:{
         count: 0,
@@ -62,42 +54,46 @@ var app=new Vue({
 	},
 	delimiters: ['[[',']]'],
 	created: function (){
-	    this.setCurrentUser();
-	    this.setUsers()
-	    this.setConfig();
-		this.setSources();
-		this.setServices()
+	    this.init();
 	},
 	mounted:function(){
 	    this.updateMessages();
 	},
 	methods:{
+	    init(){
+	        this.setCurrentUser();
+	        this.setUsers();
+	        this.setConfig();
+		    this.setSources();
+		    this.setServices();
+	    },
 		setConfig:function(){
-		    fetch('/config/get',{credentials: 'include'}).then(response=>response.json())
+		    fetch('/config/get',{credentials: 'include',redirect:'follow'}).then(response=>response.json())
 		                        .then(response=>function(data){ for(const key in response){app[key]=response[key]}}(response) )
 		},
 		setServices(){
-		    fetch('/services/',{credentials:'include'}).then(response=>response.json()).then(response=>this.services=response);
+		    fetch('/services/',{credentials:'include',redirect:'follow'}).then(response=>response.json()).then(response=>this.services=response);
 		},
 		setSources:function(){
 			var sources=['free','all','enabled']
 
-			sources.forEach(r => fetch('/cam/'+r.toString(),{credentials: 'include'})
+			sources.forEach(r => fetch('/cam/'+r.toString(),{credentials: 'include',redirect:'follow'})
 			                    .then(response=>response.json())
 			                    .then(response=>this.sources[r]=response)
 			                    .then(console.log('Success'))
 			);
 		},
 		setCurrentUser:function(){
-		    fetch('/users/current',{credentials: 'include'}).then(response=>response.json()).then(response=>this.user=response)
+		    fetch('/users/current',{credentials: 'include',redirect:'follow'}).then(response=>response.json()).then(response=>this.user=response)
 		},
 		setUsers(){
-		    fetch('/users/get',{credentials:'include'}).then(r=>r.json()).then(r=>this.users=r);
+		    fetch('/users/get',{credentials:'include',redirect:'follow'}).then(r=>r.json()).then(r=>this.users=r);
 		},
 		addCam:function(data){
 		    console.log('starting')
 		    fetch('/cam/add',{
 		        method:"POST",
+		        redirect:'follow',
 		        credentials: 'include',
 		        headers:{"Content-Type":"application/json",
 		                   "Accept":'application/json, text/plain, */*'
@@ -114,6 +110,7 @@ var app=new Vue({
 		    };
 		    fetch('/cam/del',{
 		        method:'post',
+		        redirect:'follow',
 		        credentials: 'include',
 		        headers:{"Content-Type":"application/json",
 		                   "Accept":'application/json, text/plain, */*'
@@ -146,6 +143,7 @@ var app=new Vue({
 		    };
 		    fetch('/users/del',{
 		        method:"POST",
+		        redirect:'follow',
 		        credentials: 'include',
 		        headers:{"Content-Type":"application/json",
 		                   "Accept":'application/json, text/plain, */*'
@@ -171,6 +169,7 @@ var app=new Vue({
 		    fetch('/users/'+action,{
 		        method:"POST",
 		        credentials: 'include',
+		        redirect:'follow',
 		        headers:{"Content-Type":"application/json",
 		                   "Accept":'application/json, text/plain, */*'
 		        },
@@ -180,17 +179,18 @@ var app=new Vue({
 		      .then(response=>this.setUsers());
 		},
 		reinitialize:function(){
-		    this.seen='reinitialize';
-		    fetch('config/reinitialize',{credentials: 'include'})
+		    fetch('config/reinitialize',{credentials: 'include',redirect:'follow'})
 		        .then(response=>response.json())
 		        .then(response=>this.process_message(response))
 		},
 		updateConfig:function(){
 		    var params={'height':this.height,
-		                'width':this.width};
+		                'width':this.width,
+		                'backup':this.backup};
 		    fetch('config/update',{
 		        method:'post',
 		        credentials: 'include',
+		        redirect:'follow',
 		        headers:{"Content-Type":"application/json",
 		                   "Accept":'application/json, text/plain, */*'
 		        },
@@ -200,15 +200,23 @@ var app=new Vue({
 		},
 		changeCondService(service,cond){
 		    console.log(service,cond);
-		    if (cond=='on'){cond='off'}else{cond='on'};
+
 		    fetch('/service',{
                 method:'post',
                 credentials: 'include',
+                redirect:'follow',
                 headers:{"Content-Type":"application/json",
                            "Accept":'application/json, text/plain, */*'
                 },
 		        body:JSON.stringify({'name':service,'action':cond})
 		    }).then(response=>response.json()).then(response=>this.services[service].status=cond);
+		},
+		restart(){
+		    fetch('/services/restart',{
+                method:'post',
+                credentials: 'include',
+                redirect:'follow',
+		    }).then(response=>response.json()).then(response=>this.process_message(response));
 		},
 		init_cam:function(cam){
             console.log(cam);
