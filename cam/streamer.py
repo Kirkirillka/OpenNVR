@@ -9,6 +9,7 @@ import asyncio
 import websockets
 import argparse
 import logging
+import ssl
 
 from aiohttp import web
 from cam import Broker,host,stream_port,ws_port
@@ -37,7 +38,7 @@ async def flow(request):
             logging.error("Error occured on {}:{} ws_socket".format(*ws.local_address))
             await ws.close()
             connected.remove(ws)
-    exit()
+            
     return web.Response()
 
 
@@ -49,14 +50,22 @@ async def handler(websocket,path):
     # little hack to keep connection opened
     try:
         while True:
-            await asyncio.sleep(10)
-            if not websocket.open:
-                await websocket.close()
-                connected.remove(websocket)
-                return websocket
-    except:
-        if websocket in connected: connected.remove(websocket)
-    return websocket
+            # await asyncio.sleep(10)
+            # if not websocket.open:
+            #     await websocket.close()
+            #     connected.remove(websocket)
+            #     return websocket
+            try:
+                msg=await asyncio.wait_for(websocket.recv(),timeout=20)
+            except Exception:
+                try:
+                    pont_waiter=await websocket.ping()
+                    await asyncio.wait_for(pont_waiter,timeout=10)
+                except Exception:
+                    break
+    finally:
+        if websocket in connected:
+            connected.remove(websocket)
 
 
 if __name__ == '__main__':
@@ -70,7 +79,6 @@ if __name__ == '__main__':
 
     if not os.path.exists(args.source):
         raise IOError('Source import is not available')
-
 
     try:
         loop = asyncio.get_event_loop()
