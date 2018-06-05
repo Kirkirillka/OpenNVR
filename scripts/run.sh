@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ $# -ne 3 ];then
-	echo -e "Using:$0 {source} {stream_port} {mode}"
+if [ $# -ne 4 ];then
+	echo -e "Using:$0 {source} {stream_port} {mode} {videosize}"
 	exit 1
 fi
 
@@ -10,8 +10,10 @@ fi
 SOURCENAME=$1
 STREAM_PORT=$2
 MODE=$3
+VIDEOSIZE=$4
 
 echo $MODE
+echo $VIDEOSIZE
 
 if [ ! -c $SOURCENAME ]; then
 	echo -e "Video source doesn't exist on the system."
@@ -20,7 +22,7 @@ if [ ! -c $SOURCENAME ]; then
 fi
 
 #Need to create a path to a dictionary you use to store video on
-STORE_PATH="/var/opt/py_cam/backup"
+STORE_PATH="/var/opt/opennvr/backup"
 STORE_NAME="output-%03d.mp4"
 
 #If upload folder is not exist then create it
@@ -43,14 +45,14 @@ if [ "$MODE" == "BACKUP" ]; then
 
 	echo backup is on
 
-	ffmpeg -f v4l2 -i $SOURCENAME  -f mpegts -codec:v mpeg1video -s 320x240 -b:v 1000k -bf 0 -codec:a mp2 -b:a 128k -muxdelay 0.001 http://0.0.0.0:$STREAM_PORT/flow \
-	\-s 320x240 -f segment -segment_list $SEGMENT_LIST -segment_list_size $LIMIT -segment_wrap $LIMIT -segment_time $SEGMENT_TIME -segment_format $SEGMENT_FORMAT "$STORE_PATH/$SOURCENAME/$STORE_NAME"
+	ffmpeg -f v4l2 -i $SOURCENAME  -f mpegts -codec:v mpeg1video -s $VIDEOSIZE -b:v 1000k -bf 0 -codec:a mp2 -b:a 128k -muxdelay 0.001 http://0.0.0.0:$STREAM_PORT/flow \
+	\-s $VIDEOSIZE -f segment -segment_list $SEGMENT_LIST -segment_list_size $LIMIT -segment_wrap $LIMIT -segment_time $SEGMENT_TIME -segment_format $SEGMENT_FORMAT "$STORE_PATH/$SOURCENAME/$STORE_NAME"
 	exit 0
 fi
 
 if [ "$MODE" == "BASIC" ];then
 
-	ffmpeg -f v4l2 -i /dev/video0  -f mpegts -codec:v mpeg1video -s 320x240 -b:v 1000k -bf 0 -codec:a mp2 -b:a 128k -muxdelay 0.001 http://0.0.0.0:$STREAM_PORT/flow
+	ffmpeg -f v4l2 -i /dev/video0  -f mpegts -codec:v mpeg1video -s $VIDEOSIZE -b:v 1000k -bf 0 -codec:a mp2 -b:a 128k -muxdelay 0.001 http://0.0.0.0:$STREAM_PORT/flow
 	exit 0
 fi
 
