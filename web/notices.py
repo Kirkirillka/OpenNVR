@@ -9,7 +9,7 @@ REINITILAZE={'type':'success',
              'message':'You reinitilized your OpenNVR configuration.Some new sources might be added.'}
 
 UPDATE_CONFIG={'type':'info',
-               'message':'Some parameters were updated.'}
+               'message':'Configuration updated.'}
 
 ERROR={'type':'error',
        'message':'Some error occured. Contact to developers to send bug info.'}
@@ -29,7 +29,25 @@ USER_UPDATE_SUCCESS={'type':'success',
 
 
 USER_DELETE_FAILED={'type':'error',
-                     'message':'Cannot delete this user.'}
+                     'message':'Cannot delete this user'}
 
 USER_DELETE_SUCCESS={'type':'success',
-                     'message':'User was deleted.'}
+                     'message':'User was deleted'}
+
+
+USER_PASSWORD_CHANGE_SUCCESS={'type':'success',
+                     'message':'User\s password was updated!'}
+
+USER_PASSWORD_CHANGE_FAILED={'type':'error',
+                     'message':'Cannot update user password'}
+
+SERVICE_RESTART_SUCCESS={'type':'success',
+                     'message':'OpenNVR successfully restarted. All services are online'}
+
+SERVICE_RESTART_FAILED={'type':'error',
+                     'message':'Service restart attempt failed'}
+
+
+
+NO_ACTION={'type':'info',
+           'message':'No supported action supplied. Please, check our API for futher interaction'}
