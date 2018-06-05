@@ -1,12 +1,11 @@
 import sys
 import os
+import asyncio
 
 sys.path.insert(0, os.path.abspath("../"))
 sys.path.insert(0, os.path.abspath("."))
 
-import asyncio
 
-from time import sleep
 from led.protocols import LED_ServerProtocol
 from led.utils import UNIX_ADDRESS_SOCKET
 

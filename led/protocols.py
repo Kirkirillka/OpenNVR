@@ -1,12 +1,18 @@
 import asyncio
+from led.utils import module_exists
+import importlib
+
 
 from time import sleep
 
-from led.utils import LED
-#from gpiozero import LED as LED
+#Check if we can use GPIO. We just consider if system has that module it can use GPIO :)
+if module_exists('gpiozero'):
+    importlib.import_module('gpiozero','LED')
+else:
+    from led.utils import LED
+
 
 from led.utils import STANDBY,SUCCESS,ERROR,ON_SUCCESS,ON_ERROR,TIMEOUT
-
 
 class LED_ServerProtocol(asyncio.Protocol):
     standby = LED(STANDBY)
