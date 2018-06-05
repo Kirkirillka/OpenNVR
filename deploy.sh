@@ -76,11 +76,8 @@ if [[  "$1" == "install" ]];then
 
 
     echo -e '127.0.0.1  opennvr.example.local' >> /etc/hosts
-
     service nginx restart
     ###--------------------------------------------------------------
-
-
 
     ###--------------------------------------------------------------
     #Create PyCam specific directories
@@ -121,6 +118,12 @@ if [[  "$1" == "install" ]];then
 
     #Update systemd current configuration
     systemctl daemon-reload
+
+    #Check to restart subservices to rule them
+    systemctl restart ssh
+    systemctl restart ntp
+    systemctl restart vsftpd
+
     # Force to reach out target
     systemctl start opennvr.target
     #Successfully done
