@@ -1,26 +1,12 @@
 import glob
 import subprocess
 import os
-from json import dumps, loads, dump, load
 
-from web.decorators import init,commit
-
+from json import loads, dump, load
 from flask_redis import FlaskRedis
-
 from itertools import count
 
-
-from flask_security import login_required, current_user, roles_required, Security, SQLAlchemySessionUserDatastore
-from flask_security.utils import hash_password,verify_and_update_password
-
-
-from web.auth.database import db_session, init_db
-from web.auth.models import User, Role
-
-
-
-CAM_DIR = '/opt/py_cam/cam'
-
+CAM_DIR = '/opt/opennvr/cam'
 
 
 def dict_equal(dict_a, dict_b):
@@ -29,21 +15,20 @@ def dict_equal(dict_a, dict_b):
             return True
     return False
 
+
 def dict_in(foo, sequence):
     return any([dict_equal(foo, a) for a in sequence])
 
 
 class ConfigManager():
     WEB_CONF_PATH = 'web_config/web.conf'
-    FIELDS = ['width', 'height', 'message']
+    FIELDS = ['width', 'height', 'backup']
 
     def __init__(self):
-        self._width=320
-        self._height=240
-        self._message="Hello world"
+        self._width = 320
+        self._height = 240
 
-
-    def update(self,data):
+    def update(self, data):
         config = load(open(self.WEB_CONF_PATH))
         for r in data:
             if r in self.FIELDS:
@@ -51,28 +36,101 @@ class ConfigManager():
         dump(config, open(self.WEB_CONF_PATH, 'w'))
         return True
 
-    def _commit(self,func,*args,**kwargs):
-        func(args,kwargs)
-
-
-
     @property
     def hive(self):
         return load(open(ConfigManager.WEB_CONF_PATH))
 
 
+class MessageQueue():
 
-class SourceManager():
+    def __init__(self, app):
+        self.redis_store = FlaskRedis(app)
 
-    ENABLED_SOURCES_PATH = 'web_config/en_sources.json'
-    ALL_SOURCES_PATH = 'web_config/all_sources.json'
+    def push(self, user_id, message):
+        self.redis_store.lpush(user_id, message)
+        return True
 
-    SCRIPT_PATH = "/var/opt/py_cam/scripts"
+    def pop(self, user_id, **args):
+        while True:
+            data = self.redis_store.rpop(user_id)
+            if data:
+                yield data.decode()
+            else:
+                return
+
+
+class ServiceManager():
+    WEB_CONF_PATH =  'web_config/web.conf'
+    SYSTEM_SERVICES=['nginx','opennvr.target',]
 
     def __init__(self):
-        pass
+        self.allowed_services = ['ssh', 'vsftpd', 'ntp']
 
-    def __scan(self, ws_start_port=8060, http_start_port=8061, ws_step=2, http_step=2):
+    def start(self, service):
+        if not service in self.allowed_services:
+            return False
+
+        config = load(open(self.WEB_CONF_PATH))
+        subprocess.check_call(['systemctl enable ' + service, ], shell=True)
+        subprocess.check_call(['systemctl start ' + service, ], shell=True)
+        config['services'][service]['status'] = 'on'
+        dump(config, open(self.WEB_CONF_PATH, 'w'))
+        return True
+
+    def stop(self, service):
+        if not service in self.allowed_services:
+            return False
+        config = load(open(self.WEB_CONF_PATH))
+        subprocess.check_call(['systemctl disable ' + service, ], shell=True)
+        subprocess.check_call(['systemctl stop ' + service, ], shell=True)
+        config['services'][service]['status'] = 'off'
+        dump(config, open(self.WEB_CONF_PATH, 'w'))
+        return True
+
+    def restart(self):
+        try:
+            for r in self.SYSTEM_SERVICES:
+
+                subprocess.check_call(['systemctl restart '+ r],shell=True)
+        except Exception as e:
+            print(e)
+            return False
+        return True
+
+
+class BackupManager(ConfigManager):
+    MAP = {'BASIC': 0, 'BACKUP': 1}
+
+    def __init__(self):
+        super(BackupManager, self).__init__()
+        
+        self._count = 10
+        self._duration = 10
+        self._mode = 'BASIC'
+
+    @property
+    def count(self):
+        return self._count
+
+    @property
+    def duration(self):
+        return self._count
+
+    @property
+    def mode(self):
+        return self.hive['backup']
+
+
+
+class SourceManager(BackupManager):
+    ENABLED_SOURCES_PATH = 'web_config/en_sources.json'
+    ALL_SOURCES_PATH = 'web_config/all_sources.json'
+    SCRIPT_PATH = "/var/opt/opennvr/scripts"
+
+    def __init__(self):
+        super(SourceManager, self).__init__()
+
+    def __scan__(self, ws_start_port=8060, http_start_port=8061, ws_step=2, http_step=2):
         source_dict = []
         ws_seq = count(ws_start_port, ws_step)
         http_seq = count(http_start_port, step=http_step)
@@ -100,6 +158,7 @@ class SourceManager():
 
     @property
     def free(self):
+
         all_sources = self.availiable
         en_sources = self.enabled
 
@@ -116,11 +175,12 @@ class SourceManager():
         return out
 
     def __connect(self, source):
+
         try:
             current_en_sources = self.enabled
             if len(current_en_sources) == 1:
                 current_en_sources = list(current_en_sources)
-        except:
+        except Exception as e:
             current_en_sources = []
 
         free_sources = self.free
@@ -134,13 +194,14 @@ class SourceManager():
             return False
 
     def update_db(self):
-        all_sources = self.__scan()
+
+        all_sources = self.__scan__()
         with open(self.ALL_SOURCES_PATH, 'w') as file:
             dump(all_sources, file)
         return True
 
+    def add_cam(self, source):
 
-    def add_cam(self,source):
         if isinstance(source, str):
             src = loads(source)
         else:
@@ -159,17 +220,25 @@ class SourceManager():
 
         result = self.__connect(src)
 
-        mode="BASIC"
+
+        #Videosize adjusting
+
+        videosize="{}x{}".format(self.hive['width'],self.hive['height'])
+
+
+        #Backup configuration
+        mode = self.mode
+        duration=self.duration
+        count=self.count
 
         if result:
             p = subprocess.check_call(
-                [os.path.join(self.SCRIPT_PATH,'cam_builder.sh'), 'create', name, source, ws_port, http_port,mode],
+                [os.path.join(self.SCRIPT_PATH, 'cam_builder.sh'), 'create', name, source, ws_port, http_port, mode, videosize],
             )
-            # print(p.communicate())
             return True
         return False
 
-    def del_cam(self,source):
+    def del_cam(self, source):
         enabled_sources = self.enabled
         sources = list(enumerate([r['name'] for r in enabled_sources]))
         for index, cam in sources:
@@ -179,95 +248,9 @@ class SourceManager():
                 dump(enabled_sources, open(self.ENABLED_SOURCES_PATH, 'w'))
 
                 p = subprocess.check_call(
-                    [os.path.join(self.SCRIPT_PATH,'cam_builder.sh'), 'delete', str(source)],
+                    [os.path.join(self.SCRIPT_PATH, 'cam_builder.sh'), 'delete', str(source)],
                 )
-                # print(p.communicate())
-
                 self.update_db()
 
                 return True
         return False
-
-class MessageQueue():
-
-    def __init__(self, app):
-        self.redis_store = FlaskRedis(app)
-
-    def push(self, user_id, message):
-        self.redis_store.lpush(user_id, message)
-        return True
-
-    def pop(self, user_id, **args):
-        while True:
-            data = self.redis_store.rpop(user_id)
-            if data:
-                yield data.decode()
-            else:
-                return
-
-class ServiceManager(ConfigManager):
-    def __init__(self):
-        self.allowed_services = ['ssh', 'vsftpd','ntp']
-        pass
-
-    def start(self, service):
-        if not service in self.allowed_services:
-            return False
-        config = load(open(ServiceManager.WEB_CONF_PATH))
-        subprocess.check_call(['systemctl enable ' + service, ], shell=True)
-        subprocess.check_call(['systemctl start ' + service, ], shell=True)
-        config['services'][service]['status']='on'
-        dump(config, open(ServiceManager.WEB_CONF_PATH, 'w'))
-        return True
-
-    def stop(self, service):
-        if not service in self.allowed_services:
-            return False
-        config = load(open(ServiceManager.WEB_CONF_PATH))
-        subprocess.check_call(['systemctl disable ' + service, ], shell=True)
-        subprocess.check_call(['systemctl stop ' + service, ], shell=True)
-        config['services'][service]['status'] = 'off'
-        dump(config, open(ServiceManager.WEB_CONF_PATH, 'w'))
-        return True
-
-class BackupManager(ConfigManager):
-
-    @init
-    def __init__(self):
-
-        self._count=10
-        self._duration=10
-        self._enabled=False
-
-
-    @property
-    def count(self):
-        return self._count
-
-    @count.setter
-    @commit
-    def count(self,value):
-        self._count=value
-
-
-
-
-if __name__ == '__main__':
-    src = '{"name":"test","source": "/dev/sda13", "ws_port": 8060, "http_port": 8061}'
-
-    from web.web_broker import userManager
-
-    users=userManager.users
-
-    data={"email":"User","password":"123456"}
-
-    userManager.update(2,data)
-
-    new_user={"email":"NewUser",'password':"211152"}
-
-    userManager.add_user(new_user)
-    print(userManager.users)
-    userManager.del_user(3)
-
-    print(userManager.users)
-
