@@ -5,11 +5,11 @@ SERVICE_TEMPLATE=service_templates
 
 #Create direcotry erarshy
 #
-#/var/opt/py_cam/scripts - where are scripts left
-#/var/opt/py_cam/backups - where are backups left
-#/var/opt/py_cam/service_templates - where are service templates left
-#/opt/py_cam/cam - main flow server
-#/opt/py_cam/web - webserver
+#/var/opt/opennvr/scripts - where are scripts left
+#/var/opt/opennvr/backups - where are backups left
+#/var/opt/opennvr/service_templates - where are service templates left
+#/opt/opennvr/cam - main flow server
+#/opt/opennvr/web - webserver
 
 
 if [[  "$1" == "install" ]];then
@@ -25,12 +25,12 @@ if [[  "$1" == "install" ]];then
     pip3.4 install -r requirements.txt
 
     #Extra packets
-    apt-get install -f redis-server python-celery python3-celery celeryd uwsgi uwsgi-plugin-python3 ffmpeg
+    apt-get install -f redis-server python-celery python3-celery celeryd uwsgi uwsgi-plugin-python3 ffmpeg openssl libssl-dev
 
 
     ###--------------------------------------------------------------
     #Installing vsftpd daemon
-    #apt-get install -f vsftpd
+    apt-get install -f vsftpd
     cp vsftpd.conf /etc
     service vsftpd restart
     ###--------------------------------------------------------------
@@ -56,12 +56,27 @@ if [[  "$1" == "install" ]];then
     cd $olddir
 
 
-    #Need for www-data nginx to be able to read from /etc/shadow for auth via nginx_pam_auth
-    usermod -a -G shadow www-data
-
-    cp py_cam /etc/nginx/sites-available
+    cp py_web /etc/nginx/sites-available/
     rm /etc/nginx/sites-available/default
-    ln -s /etc/nginx/sites-available/py_cam /etc/nginx/sites-enabled
+    ln -s /etc/nginx/sites-available/py_web /etc/nginx/sites-enabled
+
+
+    #Generate SSL certificate
+    #Disabled due to WebSocket SSL issue
+#    openssl req -nodes -newkey rsa:4096 -keyout opennvr.key -out opennvr.csr -subj "/C=RU/ST=Tatarsten/L=Kazan/O=OpenNVR/OU=OpenNVR Development team/CN=opennvr.example.local"
+#    openssl x509  -req -days 365 -in opennvr.csr -signkey opennvr.key -out opennvr.crt
+#
+#    rm opennvr.csr
+#
+#    mkdir -p /etc/ssl/certs/
+#    mv opennvr.crt /etc/ssl/certs/
+#
+#    mkdir  -p /etc/ssl/private/
+#    mv opennvr.key /etc/ssl/private/
+
+
+    echo -e '127.0.0.1  opennvr.example.local' >> /etc/hosts
+
     service nginx restart
     ###--------------------------------------------------------------
 
@@ -69,22 +84,20 @@ if [[  "$1" == "install" ]];then
 
     ###--------------------------------------------------------------
     #Create PyCam specific directories
-    mkdir -p /var/opt/py_cam/
-    mkdir -p /var/opt/py_cam/backups
-    mkdir -p /opt/py_cam/
-    mkdir -p /var/www/py_cam
+    mkdir -p /var/opt/opennvr/
+    mkdir -p /var/opt/opennvr/backups
+    mkdir -p /opt/opennvr/
+    mkdir -p /var/www/py_web
 
     #Copy files
-    cp -r scripts /var/opt/py_cam/
-    cp -r service_templates /var/opt/py_cam
-    cp -r web/static /var/www/py_cam
-    cp -r cam /opt/py_cam/
-    cp -r web /opt/py_cam/
-    cp -r led /opt/py_cam
-    cp __init__.py /opt/py_cam
+    cp -r scripts /var/opt/opennvr/
+    cp -r service_templates /var/opt/opennvr
+    cp -r web/static /var/www/py_web
+    cp -r cam /opt/opennvr/
+    cp -r web /opt/opennvr/
+    cp -r led /opt/opennvr
+    cp __init__.py /opt/opennvr
     ###--------------------------------------------------------------
-
-
 
 
     ###-------------------------------------------------------------
@@ -94,6 +107,13 @@ if [[  "$1" == "install" ]];then
     cp $SERVICE_TEMPLATE/opennvr.template /etc/systemd/system/opennvr.target
     cp $SERVICE_TEMPLATE/pyled.template /etc/systemd/system/pyled.service
     cp $SERVICE_TEMPLATE/pyweb.template /etc/systemd/system/pyweb.service
+
+    #Need for www-data nginx to be able to read from /etc/shadow for auth via nginx_pam_auth
+    usermod -a -G shadow www-data
+    #Change ownerships
+    chown -R www-data:www-data /opt/opennvr
+    chown -R www-data:www-data /var/opt/opennvr
+
     #Enable all subsystems
     systemctl enable pyled
     systemctl enable pyweb
@@ -115,13 +135,13 @@ if [[ "$1" == "delete" ]];then
     systemctl daemon-reload
 
     #Clean up directory structure
-    rm -rf /var/opt/py_cam
-    rm -rf /opt/py_cam
-    rm -rf /var/www/py_cam
+    rm -rf /var/opt/opennvr
+    rm -rf /opt/opennvr
+    rm -rf /var/www/opennvr
 
     #Delete nginx config for OpenNVR
-    rm /etc/nginx/sites-available/py_cam
-    rm /etc/nginx/sites-enabled/py_cam
+    rm /etc/nginx/sites-available/py_web
+    rm /etc/nginx/sites-enabled/py_web
 
     #Successfully done
     exit 0
