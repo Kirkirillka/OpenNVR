@@ -4,7 +4,7 @@
 ACTION=$1
 NAME=$2
 SOURCE=$3
-DIRECTORY="/opt/py_cam/cam"
+DIRECTORY="/opt/opennvr/cam"
 WS=$4
 HTTP=$5
 MODE=$6
@@ -17,7 +17,7 @@ TMP_CAM=/tmp/cam
 TMP_FFMPEG=/tmp/ffmpeg
 
 SERVICE_DIR=/etc/systemd/system/
-TEMPLATES_DIR=/var/opt/py_cam/service_templates
+TEMPLATES_DIR=/var/opt/opennvr/service_templates
 
 #Constants
 CAM_PREFIX_NAME='py_'
