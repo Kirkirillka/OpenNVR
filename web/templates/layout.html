@@ -8,27 +8,25 @@
     <script src="static/js/jquery.min.js"></script>
     <script src="static/js/vue.min.js"></script>
     <script src="static/js/vuex.min.js"></script>
+
     <link rel="stylesheet" href="static/css/skeleton.css">
     <link rel="stylesheet" href="static/css/custom.css">
     <link rel="stylesheet" href="static/css/style.css">
     <link rel="stylesheet" href="static/css/menu.css">
     <link rel="stylesheet" href="static/css/profile.css">
     <link rel="stylesheet" href="static/css/raleway.css">
+    <link rel="stylesheet" href="static/css/shifting.css">
 
 
     <!-- JavaScript -->
-    <script src="//cdn.jsdelivr.net/npm/alertifyjs@1.11.0/build/alertify.min.js"></script>
+    <script src="static/js/alertify.min.js"></script>
 
     <!-- CSS -->
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.11.0/build/css/alertify.min.css"/>
+    <link rel="stylesheet" href="static/css/alertify.min.css"/>
     <!-- Default theme -->
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.11.0/build/css/themes/default.min.css"/>
+    <link rel="stylesheet" href="static/css/default.min.css"/>
 
 
-
-
-
-    <!--<link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css"> -->
 </head>
 <body>
 <div class="container">
@@ -36,13 +34,13 @@
     <div id="app">
         <!-- Top -->
         {% block navigation %}
-        {% include "navigation.html" %}
 
+        {% include "navigation.html" %}
         {% endblock %}
 
         {% block body %}
         <!-- Body-->
-                {% include "cameras_init.html" %}
+        {% include "cameras_init.html" %}
         {% endblock %}
 
         {% block sidebar %}
@@ -54,12 +52,7 @@
     </div>
 </div>
 
-<!-- App initializing  -->
 <script src="static/js/app.js"></script>
-
-<!-- Postinit-->
-
-<!-- Iterate for each enables camsources and init its canvas and JSMPEG -->
 
 </body>
 </html>

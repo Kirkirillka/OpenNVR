@@ -5,12 +5,11 @@ StopWhenUnneeded=true
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/env bash -c "/var/opt/py_cam/scripts/run.sh {source} {stream_port} {mode}"
+ExecStart=/usr/bin/env bash -c "/var/opt/opennvr/scripts/run.sh {source} {stream_port} {mode} {videosize}"
 Restart=always
 RestartSec=5
 StartLimitInterval=10
 StartLimitBurst=3
-
 
 [Install]
 WantedBy=opennvr.target

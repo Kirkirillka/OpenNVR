@@ -873,7 +873,6 @@ fieldset {
   border-width: 0;
 }
 
-input[type="checkbox"],
 input[type="radio"] {
   display: inline;
 }
