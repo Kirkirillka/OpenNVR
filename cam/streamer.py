@@ -78,6 +78,7 @@ if __name__ == '__main__':
 
 
     if not os.path.exists(args.source):
+        led.show_error()
         raise IOError('Source import is not available')
 
     try:
@@ -92,9 +93,12 @@ if __name__ == '__main__':
 
         logging.info("Stream server has started up.Listen on http://{}:{}/flow".format(args.host, args.port))
         loop.run_until_complete(stream_server)
+        led.show_success()
         logging.info("Websocket server has started up.Listen on ws://{}:{}/".format(args.host, args.ws_port))
         loop.run_until_complete(ws_server)
+        led.show_success()
         logging.info("Started streaming from webcam")
+        led.show_success()
         loop.run_forever()
     except (KeyboardInterrupt,asyncio.CancelledError) as e:
         logging.info("Server is shutting down.")
