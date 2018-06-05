@@ -2,28 +2,32 @@
 {% block body %}
 
 <div class="row">
-    <div class="three column ">
-        <ul class="">
+    <div class="three columns ">
+        <ul class="menu">
             <li>
-                <a v-on:click="show.main = !show.main" href="#main">Общие настроки</a>
+                <a v-on:click="show.main = !show.main" href="#main">Settings</a>
                 <transition name="fade">
                     <ul v-if="show.main">
-                        <li><a href="#videosize" v-on:click="seen='videosize'">Размер видео</a></li>
-                        <li><a href="#reinitilize" v-on:click="reinitialize()">Реинициализация</a></li>
+                        <li><a href="#videosize" v-on:click="seen='videosize'">Video size</a></li>
+                        <li><a href="#reinitilize" v-on:click="seen='backup'">Record mode</a></li>
+                        <li><a class="warning" href="#reinitilize" v-on:click="reinitialize()">Search for new sources</a></li>
                     </ul>
                 </transition>
             </li>
+
             <li>
-                <a v-on:click="show.services= !show.services" href="#news">Сервисы</a>
+                <a v-on:click="show.services=!show.services" href="#news">Services</a>
                 <transition name="fade">
                     <ul v-if="show.services">
-                        <li><a href="#ssh" v-on:click="seen='ssh'">SSH</a></li>
-                        <li><a href="#backup" v-on:click="seen='backup'">Резервное копирование</a></li>
+                        <li v-for="service in services">
+                            <a href="#ssh" v-on:click="seen=service.name">[[service.name]]</a>
+                        </li>
                     </ul>
                 </transition>
             </li>
+
             <li>
-                <a href="#users" v-on:click="show.users= !show.users">Пользователи</a>
+                <a href="#users" v-on:click="show.users= !show.users">Users</a>
                 <transition name="fade">
                     <ul v-if="show.users">
                         <li><a href="#me" v-on:click="seen='my'">My profile</a></li>
@@ -31,50 +35,58 @@
                     </ul>
                 </transition>
             </li>
-            <li>
-                <a href="#reboot">Перезагрузка</a>
-            </li>
         </ul>
     </div>
     <div class="nine columns settings">
         <template v-if="seen=='videosize'">
             {% include "video_size.html" %}
         </template>
-        <template v-if="seen=='reinitialize'">
-            Reinitilize
-        </template>
-        <template v-if="seen=='ssh'">
-            <div class="container">
-                <div class="row">
-                    <h3>SSH</h3>
-                </div>
-                <div class="row">
-                    <div class="five columns">Текущее состояние</div>
-                    <div class=" one column">
-                        <button v-on:click="changeCondService('ssh',services.ssh )">
-                            [[ services.ssh ]]
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </template>
+
         <template v-if="seen=='backup'">
-            Backup
+            {% include "backup.html" %}
+        </template>
+
+        <template v-if="seen=='reinitialize'">
+
+        </template>
+
+        <template v-for="service in services" v-if="seen==service.name">
+            {% include "services.html" %}
         </template>
 
 
         <template v-if="seen=='my'">
             <div class="container">
                 <div class="row">
-                    <h4> You are logged as: </h4>
-                    <h2>[[user.email]]</h2>
-                    <div class="columns">
-                        <span>Roles: </span>
+                    <div class="four columns">
+                        <h4> You are logged as: </h4>
+                        <h2>[[user.email]]</h2>
+                    </div>
+
+                    <div class="four columns offset-by-four">
+                        <h4>Your roles are:</h4>
                         <div class="role" v-for="role in user.roles">[[ role ]]</div>
                     </div>
                 </div>
+                <div class="row">
+                    <h4>Update your password:</h4>
+                    <form method="post" action="/users/pwd_change">
+                        <div class="four columns">
+                            <label for="check">Old password</label>
+                            <input name="check" type="password">
+                        </div>
+                        <div class="four columns">
+                            <label for="password">New password</label>
+                            <input  name="password" type="password">
+                        </div>
+                        <div class="four columns">
+                            <input type="submit" value="Update">
+                        </div>
+                    </form>
+                </div>
             </div>
         </template>
+
 
         <template v-if="seen=='all_users'">
             <div class="container">
@@ -94,15 +106,17 @@
                             <tr v-for="user in users">
                                 <td>[[user.id]]</td>
                                 <td>[[user.email]]</td>
-                                <td>[[user.is_enabled]]</td>
+                                <td>
+                                    [[user.is_enabled]]
+                                </td>
                                 <td><span v-for="role in user.roles">
                                         <label>
                                             [[ role ]]
                                         </label>
                                     </span></td>
                                 <td>
-                                    <button v-on:click="delUser(user.id)">Delete</button>
-                                    <button v-on:click="disableUser(user.id)">
+                                    <button v-on:click="delUser(user)">Delete</button>
+                                    <button v-on:click="changeState(user)">
                                         <span v-if="user.is_enabled">Disable</span>
                                         <span v-if="!user.is_enabled">Enable</span>
                                     </button>
@@ -113,23 +127,17 @@
                     </table>
                 </div>
                 <div class="row">
-                    <div class="one-third column">
-                        <span>Имя нового пользователя</span>
-                    </div>
-                    <div class="one-third column">
-                        <span>Имя нового пользователя</span>
-                    </div>
-                </div>
-                <div class="row">
                     <form>
                         <div class="one-third column">
-                                <input type="text" id="username">
+                            <label for="email">New user name</label>
+                            <input type="text" id="email">
                         </div>
                         <div class="one-third column">
-                                <input type="password" id="password">
+                            <label for="password">New user password</label>
+                            <input type="password" id="password">
                         </div>
                         <div class="one-third column">
-                            <button>Добавить пользователя</button>
+                            <button v-on:click="addUser()">Add user</button>
                         </div>
                     </form>
                 </div>
