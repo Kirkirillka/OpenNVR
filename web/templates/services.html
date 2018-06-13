@@ -1,0 +1,22 @@
+<div class="container">
+
+    <div class="row">
+        <h4>[[service.name]]</h4>
+    </div>
+    <div class="row">
+        <div class="five columns">Current state:</div>
+        <div class=" one column">
+            <p>
+                <input
+                        v-bind:id="service.daemon"
+                        type="checkbox"
+                        v-model="service.status"
+                        true-value="on"
+                        false-value="off"
+                        v-on:change="changeCondService(service.daemon,service.status )"
+                >
+                <label v-bind:for="service.daemon"><span class="ui"></span>[[service.status]]</label></p>
+
+        </div>
+    </div>
+</div>
