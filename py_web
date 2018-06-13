@@ -1,0 +1,30 @@
+server {
+
+	listen *:80;
+	root /var/www/py_web;
+
+    #ssl off;
+    #ssl_certificate /etc/ssl/certs/opennvr.crt;
+    #ssl_certificate_key /etc/ssl/private/opennvr.key;
+
+
+
+
+	location / {
+
+		proxy_pass	http://localhost:5000;
+		proxy_set_header	Host		$host;
+		proxy_set_header	X-Real-IP	$remote_addr;
+
+		uwsgi_param UWSGI_SCHEME $scheme;
+		include uwsgi_params;
+		#uwsgi_pass unix:///tmp/web.sock;
+
+		auth_pam        "Secure Zone";
+		auth_pam_service_name "nginx";
+    }
+
+	location /static {
+		autoindex off;
+	}
+}
