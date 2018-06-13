@@ -1,0 +1,4 @@
+flask_security
+sqlalchemy
+flask_redis
+celery
