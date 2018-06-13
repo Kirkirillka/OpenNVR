@@ -1,0 +1,16 @@
+[Unit]
+Description=OpenNVR LED broker service
+
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/opennvr/led
+ExecStart=/bin/bash -c "python3 unix_run.py"
+Restart=always
+RestartSec=5
+StartLimitInterval=10
+StartLimitBurst=3
+
+
+[Install]
+WantedBy=opennvr.target

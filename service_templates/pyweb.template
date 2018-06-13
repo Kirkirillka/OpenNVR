@@ -1,0 +1,18 @@
+[Unit]
+Description=OpenNVP Web broker service
+StopWhenUnneeded=true
+
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/opennvr/web
+ExecStart=/bin/bash -c "python3.6 web_broker.py"
+#ExecStart=/usr/local/bin/uwsgi --ini webbroker.ini --plugin python3
+RestartSec=5
+StartLimitInterval=10
+StartLimitBurst=3
+Restart=always
+
+
+[Install]
+WantedBy=opennvr.target
